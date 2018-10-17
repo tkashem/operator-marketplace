@@ -43,7 +43,7 @@ func (s *phaseReconcilerFactory) GetPhaseReconciler(logger *log.Entry, event sdk
 	opsrc := event.Object.(*v1alpha1.OperatorSource)
 
 	if event.Deleted {
-		return phase.NewDeletedEventReconciler(logger, s.datastore), nil
+		return phase.NewDeletedEventReconciler(logger, s.datastore, s.kubeclient), nil
 	}
 
 	// If the Spec of the given OperatorSource object has changed from
