@@ -2,10 +2,17 @@ package phase_test
 
 import (
 	"fmt"
+	"math/rand"
+	"time"
 
 	"github.com/operator-framework/operator-marketplace/pkg/apis/marketplace/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+)
+
+var (
+	seededRand = rand.New(rand.NewSource(time.Now().UnixNano()))
 )
 
 func helperGetContextLogger() *log.Entry {
@@ -20,6 +27,7 @@ func helperNewOperatorSource(namespace, name, phase string) *v1alpha1.OperatorSo
 			Kind: v1alpha1.OperatorSourceKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
+			UID:       types.UID(seededRand.Int()),
 			Name:      name,
 			Namespace: namespace,
 		},

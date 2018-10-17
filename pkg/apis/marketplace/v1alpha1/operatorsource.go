@@ -1,5 +1,7 @@
 package v1alpha1
 
+import "strings"
+
 // The following list is the set of phases an OperatorSource object can be in
 // while it is going through reconciliation process.
 //
@@ -49,4 +51,25 @@ var (
 // particular phase.
 func GetOperatorSourcePhaseMessage(phaseName string) string {
 	return operatorSourcePhaseMessages[phaseName]
+}
+
+// IsEqual returns true if the Spec specified in this is the same as the other.
+// Otherwise, the function returns false.
+//
+// The function performs a case insensitive comparison of corresponding
+// attributes.
+//
+// If the Spec specified in other is nil then the function returns false.
+func (this *OperatorSourceSpec) IsEqual(other *OperatorSourceSpec) bool {
+	if other == nil {
+		return false
+	}
+
+	if strings.EqualFold(this.Endpoint, other.Endpoint) &&
+		strings.EqualFold(this.RegistryNamespace, other.RegistryNamespace) &&
+		strings.EqualFold(this.Type, other.Type) {
+		return true
+	}
+
+	return false
 }

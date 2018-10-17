@@ -46,6 +46,12 @@ func (s *phaseReconcilerFactory) GetPhaseReconciler(logger *log.Entry, event sdk
 		return phase.NewDeletedEventReconciler(logger, s.datastore), nil
 	}
 
+	// If the Spec of the given OperatorSource object has changed from
+	// the one in datastore then we treat it as an update event.
+	if s.datastore.HasOperatorSourceSpecChanged(opsrc) {
+		return phase.NewUpdatedEventReconciler(logger, s.datastore, s.kubeclient), nil
+	}
+
 	switch opsrc.Status.Phase {
 	case v1alpha1.OperatorSourcePhaseInitial:
 		return phase.NewInitialReconciler(logger), nil

@@ -52,6 +52,16 @@ type Writer interface {
 	//
 	// opsrcUID is the unique identifier associated with a given operator source.
 	Remove(opsrcUID types.UID)
+
+	// HasOperatorSourceSpecChanged returns true if the Spec of the
+	// OperatorSource object specified in opsrc is different from
+	// the one in datastore.
+	// Otherwise, the function returns false.
+	//
+	// datastore uses the UID of the given OperatorSource object to check if
+	// a Spec already exists to do the comparison. If no Spec is found then
+	// the function returns false indicating that it was not reconciled before.
+	HasOperatorSourceSpecChanged(opsrc *v1alpha1.OperatorSource) bool
 }
 
 // row encapsulates what we store for each operator source.
@@ -120,4 +130,13 @@ func (ds *memoryDatastore) GetPackageIDs(opsrcUID types.UID) string {
 
 func (ds *memoryDatastore) Remove(uid types.UID) {
 	delete(ds.rows, uid)
+}
+
+func (ds *memoryDatastore) HasOperatorSourceSpecChanged(opsrc *v1alpha1.OperatorSource) bool {
+	row, exists := ds.rows[opsrc.GetUID()]
+	if !exists {
+		return false
+	}
+
+	return !row.Spec.IsEqual(&opsrc.Spec)
 }

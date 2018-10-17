@@ -78,6 +78,10 @@ func TestReconcile_OperatorSourceReturnsEmptyManifestList_ErrorExpected(t *testi
 	manifests := []*appregistry.OperatorMetadata{}
 	registryClient.EXPECT().RetrieveAll(opsrcIn.Spec.RegistryNamespace).Return(manifests, nil).Times(1)
 
+	// Even through the registry returned an empty list, we expect the datastore
+	// to save the operator source Spec along with the empty list.
+	datastore.EXPECT().Write(opsrcIn, manifests).Return(nil)
+
 	opsrcGot, nextPhaseGot, errGot := reconciler.Reconcile(ctx, opsrcIn)
 	assert.Error(t, errGot)
 
