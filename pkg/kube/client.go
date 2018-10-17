@@ -44,6 +44,13 @@ type Client interface {
 	// Can also return an api error from the server
 	// e.g Conflict https://github.com/kubernetes/apimachinery/blob/master/pkg/api/errors/errors.go#L428
 	Update(object sdk.Object) error
+
+	// Delete deletes the specified object
+	// Returns an error if the object’s TypeMeta(Kind, APIVersion) or ObjectMeta(Name, Namespace) is missing or incorrect.
+	// e.g NotFound https://github.com/kubernetes/apimachinery/blob/master/pkg/api/errors/errors.go#L418
+	// “opts” configures the DeleteOptions
+	// When passed WithDeleteOptions(o), the specified metav1.DeleteOptions are set.
+	Delete(object sdk.Object, opts ...sdk.DeleteOption) error
 }
 
 // client implements Client interface.
@@ -59,4 +66,8 @@ func (*client) Get(into sdk.Object, opts ...sdk.GetOption) error {
 
 func (*client) Update(object sdk.Object) error {
 	return sdk.Update(object)
+}
+
+func (*client) Delete(object sdk.Object, opts ...sdk.DeleteOption) error {
+	return sdk.Delete(object, opts...)
 }

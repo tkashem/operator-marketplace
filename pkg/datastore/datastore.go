@@ -46,6 +46,12 @@ type Writer interface {
 	// manifests is the list of manifest(s) associated with a given operator
 	// source.
 	Write(opsrc *v1alpha1.OperatorSource, manifests []*appregistry.OperatorMetadata) error
+
+	// Remove removes everything associated with a given operator source from
+	// the underlying datastore.
+	//
+	// opsrcUID is the unique identifier associated with a given operator source.
+	Remove(opsrcUID types.UID)
 }
 
 // row encapsulates what we store for each operator source.
@@ -110,4 +116,8 @@ func (ds *memoryDatastore) GetPackageIDs(opsrcUID types.UID) string {
 	}
 
 	return strings.Join(keys, ",")
+}
+
+func (ds *memoryDatastore) Remove(uid types.UID) {
+	delete(ds.rows, uid)
 }
