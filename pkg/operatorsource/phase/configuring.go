@@ -73,7 +73,7 @@ func (r *configuringReconciler) Reconcile(ctx context.Context, in *v1alpha1.Oper
 		return
 	}
 
-	manifests := r.datastore.GetPackageIDs()
+	manifests := r.datastore.GetPackageIDs(in.GetUID())
 
 	csc := r.builder.WithMeta(in.Namespace, cscName).
 		WithSpec(in.Namespace, manifests).

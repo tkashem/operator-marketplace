@@ -46,7 +46,7 @@ func TestReconcile_NotConfigured_NewCatalogConfigSourceObjectCreated(t *testing.
 	kubeclient.EXPECT().Get(cscGet).Return(kubeClientErr)
 
 	packages := "a,b,c"
-	datastore.EXPECT().GetPackageIDs().Return(packages)
+	datastore.EXPECT().GetPackageIDs(opsrcIn.GetUID()).Return(packages)
 
 	trueVar := true
 	cscWant := cscGet.DeepCopy()
