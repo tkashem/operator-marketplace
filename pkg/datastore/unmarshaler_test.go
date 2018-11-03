@@ -9,7 +9,7 @@ import (
 
 func TestUnmarshal(t *testing.T) {
 	// Do not use tabs for indentation as yaml forbids tabs http://yaml.org/faq.html
-	data := `
+	raw := `
 publisher: redhat
 data:
   customResourceDefinitions: "my crds"
@@ -18,12 +18,25 @@ data:
 `
 
 	u := blobUnmarshalerImpl{}
-	manifest, err := u.Unmarshal([]byte(data))
+	manifest, err := u.Unmarshal([]byte(raw))
 
 	require.NoError(t, err)
 
-	assert.Equal(t, "redhat", manifest.Publisher)
 	assert.Equal(t, "my crds", manifest.Data.CustomResourceDefinitions)
 	assert.Equal(t, "my csvs", manifest.Data.ClusterServiceVersions)
 	assert.Equal(t, "my packages", manifest.Data.Packages)
+}
+
+func TestRedHatOperatorManifest(t *testing.T) {
+	raw := RedHatOperatorManifest
+
+	u := blobUnmarshalerImpl{}
+	manifest, err := u.Unmarshal([]byte(raw))
+	require.NoError(t, err)
+
+	pkg, err := u.UnmarshalData(&manifest.Data)
+	require.NoError(t, err)
+
+	m, err := u.ToManifest(pkg)
+	assert.NotNil(t, m)
 }
