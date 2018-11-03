@@ -44,3 +44,29 @@ func (m *MockblobUnmarshaler) Unmarshal(in []byte) (*Manifest, error) {
 func (mr *MockblobUnmarshalerMockRecorder) Unmarshal(in interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Unmarshal", reflect.TypeOf((*MockblobUnmarshaler)(nil).Unmarshal), in)
 }
+
+// UnmarshalData mocks base method
+func (m *MockblobUnmarshaler) UnmarshalData(data *OperatorManifestData) (*RawPackageData, error) {
+	ret := m.ctrl.Call(m, "UnmarshalData", data)
+	ret0, _ := ret[0].(*RawPackageData)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UnmarshalData indicates an expected call of UnmarshalData
+func (mr *MockblobUnmarshalerMockRecorder) UnmarshalData(data interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnmarshalData", reflect.TypeOf((*MockblobUnmarshaler)(nil).UnmarshalData), data)
+}
+
+// ToManifest mocks base method
+func (m *MockblobUnmarshaler) ToManifest(arg0 *RawPackageData) (*OperatorManifestData, error) {
+	ret := m.ctrl.Call(m, "ToManifest", arg0)
+	ret0, _ := ret[0].(*OperatorManifestData)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ToManifest indicates an expected call of ToManifest
+func (mr *MockblobUnmarshalerMockRecorder) ToManifest(arg0 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ToManifest", reflect.TypeOf((*MockblobUnmarshaler)(nil).ToManifest), arg0)
+}

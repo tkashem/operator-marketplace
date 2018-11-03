@@ -24,7 +24,7 @@ func TestGetPackageIDs(t *testing.T) {
 	unmarshaler := NewMockblobUnmarshaler(controller)
 
 	ds := &memoryDatastore{
-		manifests:   map[string]*OperatorMetadata{},
+		manifests:   map[string]*OperatorManifest{},
 		unmarshaler: unmarshaler,
 	}
 

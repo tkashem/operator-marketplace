@@ -12,16 +12,17 @@ var (
 // New returns a new instance of datastore for Operator Manifest(s)
 func New() *memoryDatastore {
 	return &memoryDatastore{
-		manifests:   map[string]*OperatorMetadata{},
+		manifests:   map[string]*OperatorManifest{},
 		unmarshaler: &blobUnmarshalerImpl{},
 	}
 }
 
 // Reader is the interface that wraps the Read method
 //
-// Read returns the associated operator manifest given a package ID
+// Read returns an operator manifest for the given set packages represeneted
+// by package ID(s) provided.
 type Reader interface {
-	Read(packageID string) (*Manifest, error)
+	Read(packageIDs []string) (*OperatorManifestData, error)
 }
 
 // Writer is an interface that is used to manage the underlying datastore
@@ -38,32 +39,45 @@ type Writer interface {
 // memoryDatastore is an in-memory implementation of operator manifest datastore.
 // TODO: In future, it will be replaced by an indexable persistent datastore.
 type memoryDatastore struct {
-	manifests   map[string]*OperatorMetadata
+	manifests   map[string]*OperatorManifest
 	unmarshaler blobUnmarshaler
 }
 
-func (ds *memoryDatastore) Read(packageID string) (*Manifest, error) {
-	metadata, exists := ds.manifests[packageID]
-	if !exists {
-		return nil, ErrManifestNotFound
+func (ds *memoryDatastore) Read(packageIDs []string) (*OperatorManifestData, error) {
+	pkg := RawPackageData{}
+	for _, packageID := range packageIDs {
+		manifest, exists := ds.manifests[packageID]
+		if !exists {
+			return nil, ErrManifestNotFound
+		}
+
+		o, err := ds.unmarshaler.UnmarshalData(&manifest.Data)
+		if err != nil {
+			return nil, err
+		}
+
+		pkg.CustomResourceDefinitions = append(pkg.CustomResourceDefinitions, o.CustomResourceDefinitions...)
+		pkg.ClusterServiceVersions = append(pkg.ClusterServiceVersions, o.ClusterServiceVersions...)
+		pkg.Packages = append(pkg.Packages, o.Packages...)
+
 	}
 
-	manifest, err := ds.unmarshaler.Unmarshal(metadata.RawYAML)
-	if err != nil {
-		return nil, err
-	}
-
-	return manifest, nil
+	return ds.unmarshaler.ToManifest(&pkg)
 }
 
 func (ds *memoryDatastore) Write(packages []*OperatorMetadata) error {
 	for _, pkg := range packages {
-		// Validate that the manifest is properly structured.
-		if _, err := ds.unmarshaler.Unmarshal(pkg.RawYAML); err != nil {
+		data, err := ds.unmarshaler.Unmarshal(pkg.RawYAML)
+		if err != nil {
 			return err
 		}
 
-		ds.manifests[pkg.ID()] = pkg
+		manifest := &OperatorManifest{
+			RegistryMetadata: pkg.RegistryMetadata,
+			Data:             data.Data,
+		}
+
+		ds.manifests[pkg.ID()] = manifest
 	}
 
 	return nil
