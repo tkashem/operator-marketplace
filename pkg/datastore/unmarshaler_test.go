@@ -4,26 +4,20 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestUnmarshal(t *testing.T) {
 	// Do not use tabs for indentation as yaml forbids tabs http://yaml.org/faq.html
-	data := `
-publisher: redhat
+	raw := `
 data:
-  customResourceDefinitions: "my crds"
-  clusterServiceVersions: "my csvs"
-  packages: "my packages"
+  customResourceDefinitions:
+  clusterServiceVersions:
+  packages:
 `
 
 	u := blobUnmarshalerImpl{}
-	manifest, err := u.Unmarshal([]byte(data))
+	data, err := u.Unmarshal([]byte(raw))
 
-	require.NoError(t, err)
-
-	assert.Equal(t, "redhat", manifest.Publisher)
-	assert.Equal(t, "my crds", manifest.Data.CustomResourceDefinitions)
-	assert.Equal(t, "my csvs", manifest.Data.ClusterServiceVersions)
-	assert.Equal(t, "my packages", manifest.Data.Packages)
+	assert.NoError(t, err)
+	assert.NotNil(t, data)
 }

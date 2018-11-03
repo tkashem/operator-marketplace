@@ -6,15 +6,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// Manifest encapsulates content of an operator manifest.
-type Manifest struct {
-	// Publisher represents the publisher of a given operator manifest.
-	Publisher string `yaml:"publisher"`
-
-	// Data encapsulates the set of CRD(s), CSV(s) and package(s) in raw format.
-	Data OperatorManifestData `yaml:"data"`
-}
-
 // OperatorManifestData encapsulates the list of CRD(s), CSV(s) and package(s)
 // associated with an operator manifest. It contains a complete and
 // properly indented operator manifest.
