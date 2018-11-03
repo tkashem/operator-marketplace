@@ -83,18 +83,18 @@ func (r *configuringReconciler) createCatalogData(csc *v1alpha1.CatalogSourceCon
 		return data, fmt.Errorf("No packages specified in CatalogSourceConfig %s/%s", csc.Namespace, csc.Name)
 	}
 
-	// TBD: Do we create a CatalogSource per package?
-	for id := range packageIDs {
-		manifest, err := r.reader.Read(packageIDs[id])
-		if err != nil {
-			r.log.Errorf("Error \"%v\" getting manifest for package ID %s", err, packageIDs[id])
-			continue
-		}
-		// TODO: Add more error checking.
-		data[ConfigMapCRDName] += manifest.Data.CustomResourceDefinitions
-		data[ConfigMapCSVName] += manifest.Data.ClusterServiceVersions
-		data[ConfigMapPackageName] += manifest.Data.Packages
+	manifest, err := r.reader.Read(packageIDs)
+	if err != nil {
+		log.Errorf("Error \"%v\" getting manifest", err)
+		return nil, err
 	}
+
+	// TBD: Do we create a CatalogSource per package?
+	// TODO: Add more error checking
+	data[ConfigMapCRDName] += manifest.CustomResourceDefinitions
+	data[ConfigMapCSVName] += manifest.ClusterServiceVersions
+	data[ConfigMapPackageName] += manifest.Packages
+
 	return data, nil
 }
 
