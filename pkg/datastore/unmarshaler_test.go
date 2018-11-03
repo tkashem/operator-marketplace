@@ -4,20 +4,128 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestUnmarshal(t *testing.T) {
+var (
 	// Do not use tabs for indentation as yaml forbids tabs http://yaml.org/faq.html
-	raw := `
+	rawCRDs = `
 data:
-  customResourceDefinitions:
-  clusterServiceVersions:
-  packages:
+  customResourceDefinitions: |-      
+    - apiVersion: apiextensions.k8s.io/v1beta1
+      kind: CustomResourceDefinition
+      metadata:
+        name: jbossapps-1.jboss.middleware.redhat.com
+    - apiVersion: apiextensions.k8s.io/v1beta1
+      kind: CustomResourceDefinition
+      metadata:
+        name: jbossapps-2.jboss.middleware.redhat.com
 `
 
+	crdWant = []OLMObject{
+		OLMObject{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "apiextensions.k8s.io/v1beta1",
+				Kind:       "CustomResourceDefinition",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "jbossapps-1.jboss.middleware.redhat.com",
+			},
+		},
+		OLMObject{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "apiextensions.k8s.io/v1beta1",
+				Kind:       "CustomResourceDefinition",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "jbossapps-2.jboss.middleware.redhat.com",
+			},
+		},
+	}
+
+	// Do not use tabs for indentation as yaml forbids tabs http://yaml.org/faq.html
+	rawPackages = `
+data:
+  packages: |-
+    - #! package-manifest: ./deploy/chart/catalog_resources/rh-operators/etcdoperator.v0.9.2.clusterserviceversion.yaml
+      packageName: etcd
+      channels:
+        - name: alpha
+          currentCSV: etcdoperator.v0.9.2
+        - name: nightly
+          currentCSV: etcdoperator.v0.9.2-nightly
+      defaultChannel: alpha
+`
+
+	packagesWant = []PackageManifest{
+		PackageManifest{
+			PackageName:        "etcd",
+			DefaultChannelName: "alpha",
+			Channels: []PackageChannel{
+				PackageChannel{Name: "alpha", CurrentCSVName: "etcdoperator.v0.9.2"},
+				PackageChannel{Name: "nightly", CurrentCSVName: "etcdoperator.v0.9.2-nightly"},
+			},
+		},
+	}
+
+	csvWant = []OLMObject{
+		OLMObject{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "app.coreos.com/v1alpha1",
+				Kind:       "ClusterServiceVersion-v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "jbossapp-operator.v0.1.0",
+			},
+		},
+	}
+)
+
+// Scenario: An operator manifest has a list of CRD(s).
+// Expected Result: The list of CRD(s) gets marshaled into structured type.
+func TestUnmarshal_ManifestHasCRD_SuccessfullyParsed(t *testing.T) {
+
 	u := blobUnmarshalerImpl{}
-	data, err := u.Unmarshal([]byte(raw))
+	dataGot, err := u.Unmarshal([]byte(rawCRDs))
 
 	assert.NoError(t, err)
-	assert.NotNil(t, data)
+	assert.NotNil(t, dataGot)
+
+	crdGot := dataGot.CustomResourceDefinitions
+
+	assert.ElementsMatch(t, crdWant, crdGot)
+}
+
+// Scenario: An operator manifest has a list of package(s).
+// Expected Result: The list of package(s) gets marshaled into structured type.
+func TestUnmarshal_ManifestHasPackages_SuccessfullyParsed(t *testing.T) {
+	u := blobUnmarshalerImpl{}
+	dataGot, err := u.Unmarshal([]byte(rawPackages))
+
+	assert.NoError(t, err)
+	assert.NotNil(t, dataGot)
+
+	packagesGot := dataGot.Packages
+
+	assert.ElementsMatch(t, packagesWant, packagesGot)
+}
+
+// Given a structured representation of operator manifest we should be able to
+// convert it to raw YAML representation so that a configMap object for catalog
+// source can be created successfully.
+func TestMarshal(t *testing.T) {
+	marshaled := StructuredOperatorManifestData{
+		CustomResourceDefinitions: crdWant,
+		ClusterServiceVersions:    csvWant,
+		Packages:                  packagesWant,
+	}
+
+	u := blobUnmarshalerImpl{}
+	rawGot, err := u.Marshal(&marshaled)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, rawGot)
+	assert.NotEmpty(t, rawGot.Packages)
+	assert.NotEmpty(t, rawGot.CustomResourceDefinitions)
+	assert.NotEmpty(t, rawGot.ClusterServiceVersions)
 }
