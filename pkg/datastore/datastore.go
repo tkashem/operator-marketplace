@@ -12,8 +12,8 @@ var (
 // New returns a new instance of datastore for Operator Manifest(s).
 func New() *memoryDatastore {
 	return &memoryDatastore{
-		manifests:   map[string]*OperatorManifest{},
-		unmarshaler: &blobUnmarshalerImpl{},
+		manifests: map[string]*OperatorManifest{},
+		parser:    &manifestYAMLParser{},
 	}
 }
 
@@ -44,8 +44,8 @@ type Writer interface {
 // memoryDatastore is an in-memory implementation of operator manifest datastore.
 // TODO: In future, it will be replaced by an indexable persistent datastore.
 type memoryDatastore struct {
-	manifests   map[string]*OperatorManifest
-	unmarshaler blobUnmarshaler
+	manifests map[string]*OperatorManifest
+	parser    ManifestYAMLParser
 }
 
 func (ds *memoryDatastore) Read(packageIDs []string) (*OperatorManifestData, error) {
@@ -63,12 +63,12 @@ func (ds *memoryDatastore) Read(packageIDs []string) (*OperatorManifestData, err
 		data.Packages = append(data.Packages, d.Packages...)
 	}
 
-	return ds.unmarshaler.Marshal(&data)
+	return ds.parser.Marshal(&data)
 }
 
 func (ds *memoryDatastore) Write(packages []*OperatorMetadata) error {
 	for _, pkg := range packages {
-		data, err := ds.unmarshaler.Unmarshal(pkg.RawYAML)
+		data, err := ds.parser.Unmarshal(pkg.RawYAML)
 		if err != nil {
 			return err
 		}
