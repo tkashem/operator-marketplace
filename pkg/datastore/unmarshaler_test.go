@@ -85,7 +85,7 @@ data:
 // Expected Result: The list of CRD(s) gets marshaled into structured type.
 func TestUnmarshal_ManifestHasCRD_SuccessfullyParsed(t *testing.T) {
 
-	u := blobUnmarshalerImpl{}
+	u := manifestYAMLParser{}
 	dataGot, err := u.Unmarshal([]byte(rawCRDs))
 
 	assert.NoError(t, err)
@@ -99,7 +99,7 @@ func TestUnmarshal_ManifestHasCRD_SuccessfullyParsed(t *testing.T) {
 // Scenario: An operator manifest has a list of package(s).
 // Expected Result: The list of package(s) gets marshaled into structured type.
 func TestUnmarshal_ManifestHasPackages_SuccessfullyParsed(t *testing.T) {
-	u := blobUnmarshalerImpl{}
+	u := manifestYAMLParser{}
 	dataGot, err := u.Unmarshal([]byte(rawPackages))
 
 	assert.NoError(t, err)
@@ -120,7 +120,7 @@ func TestMarshal(t *testing.T) {
 		Packages:                  packagesWant,
 	}
 
-	u := blobUnmarshalerImpl{}
+	u := manifestYAMLParser{}
 	rawGot, err := u.Marshal(&marshaled)
 
 	assert.NoError(t, err)
