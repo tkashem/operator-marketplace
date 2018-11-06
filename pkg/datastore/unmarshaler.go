@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/ghodss/yaml"
+	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 )
 
 // ManifestYAMLParser is an interface that is responsible for marshaling raw operator
@@ -38,7 +39,8 @@ func (*manifestYAMLParser) Unmarshal(rawYAML []byte) (*StructuredOperatorManifes
 		return nil, fmt.Errorf("error parsing raw YAML : %s", err)
 	}
 
-	var crds, csvs []OLMObject
+	var crds []v1beta1.CustomResourceDefinition
+	var csvs []OLMObject
 	var packages []PackageManifest
 	data := manifestYAML.Data
 

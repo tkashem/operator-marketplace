@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -22,8 +23,8 @@ data:
         name: jbossapps-2.jboss.middleware.redhat.com
 `
 
-	crdWant = []OLMObject{
-		OLMObject{
+	crdWant = []v1beta1.CustomResourceDefinition{
+		v1beta1.CustomResourceDefinition{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "apiextensions.k8s.io/v1beta1",
 				Kind:       "CustomResourceDefinition",
@@ -32,7 +33,7 @@ data:
 				Name: "jbossapps-1.jboss.middleware.redhat.com",
 			},
 		},
-		OLMObject{
+		v1beta1.CustomResourceDefinition{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "apiextensions.k8s.io/v1beta1",
 				Kind:       "CustomResourceDefinition",

@@ -3,6 +3,7 @@ package datastore
 import (
 	"encoding/json"
 
+	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -53,7 +54,7 @@ type OperatorManifest struct {
 type StructuredOperatorManifestData struct {
 	// CustomResourceDefinitions is the list of custom resource definition(s)
 	// associated with this operator manifest.
-	CustomResourceDefinitions []OLMObject `json:"customResourceDefinitions"`
+	CustomResourceDefinitions []v1beta1.CustomResourceDefinition `json:"customResourceDefinitions"`
 
 	// ClusterServiceVersions is the list of cluster service version(s)
 	//associated with this operators manifest.
