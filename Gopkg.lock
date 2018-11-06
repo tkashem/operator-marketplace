@@ -642,9 +642,10 @@
   revision = "408db4a50408e2149acbd657bceb2480c13cb0a4"
 
 [[projects]]
-  digest = "1:69b102c3ee60ab3704fac6e46bac1e8894e20b11498ec832846a229f21946200"
+  digest = "1:a26c8e664af7122535f2b13fd4977a0d25894a545e7ce679502e49372812f6e6"
   name = "k8s.io/apimachinery"
   packages = [
+    "pkg/api/equality",
     "pkg/api/errors",
     "pkg/api/meta",
     "pkg/api/resource",
@@ -842,6 +843,8 @@
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/require",
     "k8s.io/api/core/v1",
+    "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1",
+    "k8s.io/apimachinery/pkg/api/equality",
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/apimachinery/pkg/runtime",
