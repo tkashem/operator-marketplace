@@ -3,6 +3,7 @@ package datastore
 import (
 	"testing"
 
+	olm_v1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -69,14 +70,54 @@ data:
 		},
 	}
 
-	csvWant = []OLMObject{
-		OLMObject{
+	// Do not use tabs for indentation as yaml forbids tabs http://yaml.org/faq.html
+	rawCSV = `
+data:
+  clusterServiceVersions: |-
+    - apiVersion: app.coreos.com/v1alpha1
+      kind: ClusterServiceVersion-v1
+      metadata:
+        name: jbossapp-operator.v0.1.0
+      spec:
+        replaces: foo
+        customresourcedefinitions:
+          owned:
+          - name: bar
+            version: v1
+            kind: JBossApp
+          required:
+          - name: baz
+            version: v1
+            kind: BazApp
+`
+
+	csvWant = []ClusterServiceVersion{
+		ClusterServiceVersion{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "app.coreos.com/v1alpha1",
 				Kind:       "ClusterServiceVersion-v1",
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "jbossapp-operator.v0.1.0",
+			},
+			Spec: ClusterServiceVersionSpec{
+				Replaces: "foo",
+				CustomResourceDefinitions: olm_v1alpha1.CustomResourceDefinitions{
+					Owned: []olm_v1alpha1.CRDDescription{
+						olm_v1alpha1.CRDDescription{
+							Name:    "bar",
+							Version: "v1",
+							Kind:    "JBossApp",
+						},
+					},
+					Required: []olm_v1alpha1.CRDDescription{
+						olm_v1alpha1.CRDDescription{
+							Name:    "baz",
+							Version: "v1",
+							Kind:    "BazApp",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -109,6 +150,20 @@ func TestUnmarshal_ManifestHasPackages_SuccessfullyParsed(t *testing.T) {
 	packagesGot := dataGot.Packages
 
 	assert.ElementsMatch(t, packagesWant, packagesGot)
+}
+
+// Scenario: An operator manifest has a list of package(s).
+// Expected Result: The list of package(s) gets marshaled into structured type.
+func TestUnmarshal_ManifestHasCSV_SuccessfullyParsed(t *testing.T) {
+	u := manifestYAMLParser{}
+	dataGot, err := u.Unmarshal([]byte(rawCSV))
+
+	assert.NoError(t, err)
+	assert.NotNil(t, dataGot)
+
+	csvGot := dataGot.ClusterServiceVersions
+
+	assert.ElementsMatch(t, csvWant, csvGot)
 }
 
 // Given a structured representation of operator manifest we should be able to

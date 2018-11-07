@@ -40,7 +40,7 @@ func (*manifestYAMLParser) Unmarshal(rawYAML []byte) (*StructuredOperatorManifes
 	}
 
 	var crds []v1beta1.CustomResourceDefinition
-	var csvs []OLMObject
+	var csvs []ClusterServiceVersion
 	var packages []PackageManifest
 	data := manifestYAML.Data
 

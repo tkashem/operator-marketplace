@@ -3,6 +3,7 @@ package datastore
 import (
 	"encoding/json"
 
+	olm_v1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -58,10 +59,30 @@ type StructuredOperatorManifestData struct {
 
 	// ClusterServiceVersions is the list of cluster service version(s)
 	//associated with this operators manifest.
-	ClusterServiceVersions []OLMObject `json:"clusterServiceVersions"`
+	ClusterServiceVersions []ClusterServiceVersion `json:"clusterServiceVersions"`
 
 	// Packages is the list of package(s) associated with this operator manifest.
 	Packages []PackageManifest `json:"packages"`
+}
+
+// ClusterServiceVersion is a structured representation of
+type ClusterServiceVersion struct {
+	// Type metadata.
+	metav1.TypeMeta `json:",inline"`
+
+	// Object metadata.
+	metav1.ObjectMeta `json:"metadata"`
+
+	Spec ClusterServiceVersionSpec `json:"spec"`
+}
+
+type ClusterServiceVersionSpec struct {
+	// The name of a CSV this one replaces. Should match the `metadata.Name`
+	// field of the old CSV.
+	// +optional
+	Replaces string `json:"replaces,omitempty"`
+
+	CustomResourceDefinitions olm_v1alpha1.CustomResourceDefinitions `json:"customresourcedefinitions,omitempty"`
 }
 
 // OLMObject is a structured representation of OLM object and is
