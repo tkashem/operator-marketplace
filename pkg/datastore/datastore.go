@@ -9,7 +9,10 @@ import (
 func New() *memoryDatastore {
 	return &memoryDatastore{
 		manifests: map[string]*OperatorManifest{},
-		parser:    &manifestYAMLParser{},
+		packages:  map[string]*ManifestPackage{},
+
+		parser:   &manifestYAMLParser{},
+		unpacker: &manifestUnpacker{},
 	}
 }
 
@@ -41,7 +44,10 @@ type Writer interface {
 // TODO: In future, it will be replaced by an indexable persistent datastore.
 type memoryDatastore struct {
 	manifests map[string]*OperatorManifest
-	parser    ManifestYAMLParser
+	packages  map[string]*ManifestPackage
+
+	parser   ManifestYAMLParser
+	unpacker *manifestUnpacker
 }
 
 func (ds *memoryDatastore) Read(packageIDs []string) (*OperatorManifestData, error) {
@@ -67,6 +73,15 @@ func (ds *memoryDatastore) Write(packages []*OperatorMetadata) error {
 		data, err := ds.parser.Unmarshal(pkg.RawYAML)
 		if err != nil {
 			return err
+		}
+
+		packages, err := ds.unpacker.Unpack(data)
+		if err != nil {
+			return err
+		}
+
+		for _, operatorPackage := range packages {
+			ds.packages[operatorPackage.Package.PackageName] = operatorPackage
 		}
 
 		manifest := &OperatorManifest{

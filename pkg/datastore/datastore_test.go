@@ -1,6 +1,7 @@
 package datastore
 
 import (
+	"io/ioutil"
 	"strings"
 	"testing"
 
@@ -25,7 +26,10 @@ func TestGetPackageIDs(t *testing.T) {
 
 	ds := &memoryDatastore{
 		manifests: map[string]*OperatorManifest{},
-		parser:    parser,
+		packages:  map[string]*ManifestPackage{},
+
+		parser:   parser,
+		unpacker: &manifestUnpacker{},
 	}
 
 	// We expect Unmarshal function to be invoked for each package.
@@ -38,6 +42,26 @@ func TestGetPackageIDs(t *testing.T) {
 	actual := strings.Split(result, ",")
 
 	assert.ElementsMatch(t, expected, actual)
+}
+
+func TestSomething(t *testing.T) {
+	ds := New()
+
+	rawYAML, err := ioutil.ReadFile("/home/akashem/rh-operators.yaml")
+	require.NoError(t, err)
+
+	packages := []*OperatorMetadata{
+		&OperatorMetadata{
+			RegistryMetadata: RegistryMetadata{
+				Namespace:  "foo",
+				Repository: "bar",
+			},
+			RawYAML: rawYAML,
+		},
+	}
+
+	err = ds.Write(packages)
+	assert.NoError(t, err)
 }
 
 func helperNewOperatorMetadata(namespace, repository string) *OperatorMetadata {
