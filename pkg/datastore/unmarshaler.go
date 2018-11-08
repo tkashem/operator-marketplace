@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/ghodss/yaml"
+	olm_v1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 )
 
@@ -24,7 +25,7 @@ type ManifestYAMLParser interface {
 	//
 	// The function accepts a structured representation of an operator manifest
 	// specified in marshaled and returns a raw yaml representation of it.
-	Marshal(marshaled *StructuredOperatorManifestData) (*OperatorManifestData, error)
+	Marshal(marshaled *Manifest) (*OperatorManifestData, error)
 }
 
 type manifestYAMLParser struct{}
@@ -40,7 +41,7 @@ func (*manifestYAMLParser) Unmarshal(rawYAML []byte) (*StructuredOperatorManifes
 	}
 
 	var crds []v1beta1.CustomResourceDefinition
-	var csvs []ClusterServiceVersion
+	var csvs []olm_v1alpha1.ClusterServiceVersion
 	var packages []PackageManifest
 	data := manifestYAML.Data
 
@@ -77,7 +78,7 @@ func (*manifestYAMLParser) Unmarshal(rawYAML []byte) (*StructuredOperatorManifes
 	return marshaled, nil
 }
 
-func (*manifestYAMLParser) Marshal(marshaled *StructuredOperatorManifestData) (*OperatorManifestData, error) {
+func (*manifestYAMLParser) Marshal(marshaled *Manifest) (*OperatorManifestData, error) {
 	crdRaw, err := yaml.Marshal(marshaled.CustomResourceDefinitions)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling CRD list into yaml : %s", err)

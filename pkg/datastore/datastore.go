@@ -51,21 +51,19 @@ type memoryDatastore struct {
 }
 
 func (ds *memoryDatastore) Read(packageIDs []string) (*OperatorManifestData, error) {
-	data := StructuredOperatorManifestData{}
+	data := &Manifest{}
 	for _, packageID := range packageIDs {
-		manifest, exists := ds.manifests[packageID]
+		operatorPackage, exists := ds.packages[packageID]
 		if !exists {
 			return nil, fmt.Errorf("package [%s] not found", packageID)
 		}
 
-		d := manifest.Data
-
-		data.CustomResourceDefinitions = append(data.CustomResourceDefinitions, d.CustomResourceDefinitions...)
-		data.ClusterServiceVersions = append(data.ClusterServiceVersions, d.ClusterServiceVersions...)
-		data.Packages = append(data.Packages, d.Packages...)
+		data.CustomResourceDefinitions = append(data.CustomResourceDefinitions, operatorPackage.CustomResourceDefinitions...)
+		data.ClusterServiceVersions = append(data.ClusterServiceVersions, operatorPackage.ClusterServiceVersions...)
+		data.Packages = append(data.Packages, operatorPackage.Package)
 	}
 
-	return ds.parser.Marshal(&data)
+	return ds.parser.Marshal(data)
 }
 
 func (ds *memoryDatastore) Write(packages []*OperatorMetadata) error {
@@ -96,8 +94,8 @@ func (ds *memoryDatastore) Write(packages []*OperatorMetadata) error {
 }
 
 func (ds *memoryDatastore) GetPackageIDs() string {
-	keys := make([]string, 0, len(ds.manifests))
-	for key := range ds.manifests {
+	keys := make([]string, 0, len(ds.packages))
+	for key := range ds.packages {
 		keys = append(keys, key)
 	}
 

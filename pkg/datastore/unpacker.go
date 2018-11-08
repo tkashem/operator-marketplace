@@ -4,13 +4,20 @@ import (
 	"errors"
 	"fmt"
 
+	olm_v1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 )
 
 type ManifestPackage struct {
 	Package                   *PackageManifest
 	CustomResourceDefinitions []*v1beta1.CustomResourceDefinition
-	ClusterServiceVersions    []*ClusterServiceVersion
+	ClusterServiceVersions    []*olm_v1alpha1.ClusterServiceVersion
+}
+
+type Manifest struct {
+	Packages                  []*PackageManifest
+	CustomResourceDefinitions []*v1beta1.CustomResourceDefinition
+	ClusterServiceVersions    []*olm_v1alpha1.ClusterServiceVersion
 }
 
 type manifestUnpacker struct {
@@ -44,12 +51,12 @@ func (u *manifestUnpacker) Unpack(manifest *StructuredOperatorManifestData) ([]*
 	return packages, nil
 }
 
-func extract(pm *PackageManifest, crds map[string]*v1beta1.CustomResourceDefinition, csvs map[string]*ClusterServiceVersion) ([]*v1beta1.CustomResourceDefinition, []*ClusterServiceVersion, error) {
-	csvForThisPackage := make([]*ClusterServiceVersion, 0)
+func extract(pm *PackageManifest, crds map[string]*v1beta1.CustomResourceDefinition, csvs map[string]*olm_v1alpha1.ClusterServiceVersion) ([]*v1beta1.CustomResourceDefinition, []*olm_v1alpha1.ClusterServiceVersion, error) {
+	csvForThisPackage := make([]*olm_v1alpha1.ClusterServiceVersion, 0)
 	crdForThisPackage := make([]*v1beta1.CustomResourceDefinition, 0)
 
 	crdMapForPackage := map[string]*v1beta1.CustomResourceDefinition{}
-	csvMapForPackage := map[string]*ClusterServiceVersion{}
+	csvMapForPackage := map[string]*olm_v1alpha1.ClusterServiceVersion{}
 
 	for _, channel := range pm.Channels {
 		crdForCurrentChannel, csvForCurrentChannel, err := extractChannel(&channel, crds, csvs)
@@ -65,7 +72,7 @@ func extract(pm *PackageManifest, crds map[string]*v1beta1.CustomResourceDefinit
 			}
 		}
 
-		csvUniqueForChannel := make([]*ClusterServiceVersion, 0)
+		csvUniqueForChannel := make([]*olm_v1alpha1.ClusterServiceVersion, 0)
 		for _, csv := range csvForCurrentChannel {
 			if _, ok := csvMapForPackage[csv.Name]; ok != true {
 				csvMapForPackage[csv.Name] = csv
@@ -80,8 +87,8 @@ func extract(pm *PackageManifest, crds map[string]*v1beta1.CustomResourceDefinit
 	return crdForThisPackage, csvForThisPackage, nil
 }
 
-func extractChannel(channel *PackageChannel, crds map[string]*v1beta1.CustomResourceDefinition, csvs map[string]*ClusterServiceVersion) ([]*v1beta1.CustomResourceDefinition, []*ClusterServiceVersion, error) {
-	csvForThisChannel := make([]*ClusterServiceVersion, 0)
+func extractChannel(channel *PackageChannel, crds map[string]*v1beta1.CustomResourceDefinition, csvs map[string]*olm_v1alpha1.ClusterServiceVersion) ([]*v1beta1.CustomResourceDefinition, []*olm_v1alpha1.ClusterServiceVersion, error) {
+	csvForThisChannel := make([]*olm_v1alpha1.ClusterServiceVersion, 0)
 
 	currentCSV, ok := csvs[channel.CurrentCSVName]
 	if !ok {
@@ -105,7 +112,7 @@ func extractChannel(channel *PackageChannel, crds map[string]*v1beta1.CustomReso
 	return crdForthisChannel, csvForThisChannel, nil
 }
 
-func extractCRD(allCRDs map[string]*v1beta1.CustomResourceDefinition, csvs ...*ClusterServiceVersion) ([]*v1beta1.CustomResourceDefinition, error) {
+func extractCRD(allCRDs map[string]*v1beta1.CustomResourceDefinition, csvs ...*olm_v1alpha1.ClusterServiceVersion) ([]*v1beta1.CustomResourceDefinition, error) {
 	crds := make([]*v1beta1.CustomResourceDefinition, 0)
 
 	for _, csv := range csvs {
@@ -131,8 +138,8 @@ func extractCRD(allCRDs map[string]*v1beta1.CustomResourceDefinition, csvs ...*C
 	return crds, nil
 }
 
-func extractReplaces(currentCSV *ClusterServiceVersion, allCSVs map[string]*ClusterServiceVersion) ([]*ClusterServiceVersion, error) {
-	olderCSVs := make([]*ClusterServiceVersion, 0)
+func extractReplaces(currentCSV *olm_v1alpha1.ClusterServiceVersion, allCSVs map[string]*olm_v1alpha1.ClusterServiceVersion) ([]*olm_v1alpha1.ClusterServiceVersion, error) {
+	olderCSVs := make([]*olm_v1alpha1.ClusterServiceVersion, 0)
 
 	csv := currentCSV
 	for {
@@ -151,8 +158,8 @@ func extractReplaces(currentCSV *ClusterServiceVersion, allCSVs map[string]*Clus
 	}
 }
 
-func extractClusterServiceVersionsToMap(manifest *StructuredOperatorManifestData) map[string]*ClusterServiceVersion {
-	csvs := map[string]*ClusterServiceVersion{}
+func extractClusterServiceVersionsToMap(manifest *StructuredOperatorManifestData) map[string]*olm_v1alpha1.ClusterServiceVersion {
+	csvs := map[string]*olm_v1alpha1.ClusterServiceVersion{}
 
 	for i, csv := range manifest.ClusterServiceVersions {
 		csvs[csv.Name] = &manifest.ClusterServiceVersions[i]

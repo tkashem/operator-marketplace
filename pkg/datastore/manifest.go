@@ -59,7 +59,7 @@ type StructuredOperatorManifestData struct {
 
 	// ClusterServiceVersions is the list of cluster service version(s)
 	//associated with this operators manifest.
-	ClusterServiceVersions []ClusterServiceVersion `json:"clusterServiceVersions"`
+	ClusterServiceVersions []olm_v1alpha1.ClusterServiceVersion `json:"clusterServiceVersions"`
 
 	// Packages is the list of package(s) associated with this operator manifest.
 	Packages []PackageManifest `json:"packages"`
@@ -80,9 +80,9 @@ type ClusterServiceVersionSpec struct {
 	// The name of a CSV this one replaces. Should match the `metadata.Name`
 	// field of the old CSV.
 	// +optional
-	Replaces string `json:"replaces,omitempty"`
-
+	Replaces                  string                                 `json:"replaces,omitempty"`
 	CustomResourceDefinitions olm_v1alpha1.CustomResourceDefinitions `json:"customresourcedefinitions,omitempty"`
+	Raw                       map[string]*json.RawMessage            `json:",inline"`
 }
 
 // OLMObject is a structured representation of OLM object and is

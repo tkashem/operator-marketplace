@@ -24,8 +24,8 @@ data:
         name: jbossapps-2.jboss.middleware.redhat.com
 `
 
-	crdWant = []v1beta1.CustomResourceDefinition{
-		v1beta1.CustomResourceDefinition{
+	crdWant = []*v1beta1.CustomResourceDefinition{
+		&v1beta1.CustomResourceDefinition{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "apiextensions.k8s.io/v1beta1",
 				Kind:       "CustomResourceDefinition",
@@ -34,7 +34,7 @@ data:
 				Name: "jbossapps-1.jboss.middleware.redhat.com",
 			},
 		},
-		v1beta1.CustomResourceDefinition{
+		&v1beta1.CustomResourceDefinition{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "apiextensions.k8s.io/v1beta1",
 				Kind:       "CustomResourceDefinition",
@@ -59,8 +59,8 @@ data:
       defaultChannel: alpha
 `
 
-	packagesWant = []PackageManifest{
-		PackageManifest{
+	packagesWant = []*PackageManifest{
+		&PackageManifest{
 			PackageName:        "etcd",
 			DefaultChannelName: "alpha",
 			Channels: []PackageChannel{
@@ -91,8 +91,8 @@ data:
             kind: BazApp
 `
 
-	csvWant = []ClusterServiceVersion{
-		ClusterServiceVersion{
+	csvWant = []*olm_v1alpha1.ClusterServiceVersion{
+		&olm_v1alpha1.ClusterServiceVersion{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "app.coreos.com/v1alpha1",
 				Kind:       "ClusterServiceVersion-v1",
@@ -100,7 +100,7 @@ data:
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "jbossapp-operator.v0.1.0",
 			},
-			Spec: ClusterServiceVersionSpec{
+			Spec: olm_v1alpha1.ClusterServiceVersionSpec{
 				Replaces: "foo",
 				CustomResourceDefinitions: olm_v1alpha1.CustomResourceDefinitions{
 					Owned: []olm_v1alpha1.CRDDescription{
@@ -170,7 +170,7 @@ func TestUnmarshal_ManifestHasCSV_SuccessfullyParsed(t *testing.T) {
 // convert it to raw YAML representation so that a configMap object for catalog
 // source can be created successfully.
 func TestMarshal(t *testing.T) {
-	marshaled := StructuredOperatorManifestData{
+	marshaled := Manifest{
 		CustomResourceDefinitions: crdWant,
 		ClusterServiceVersions:    csvWant,
 		Packages:                  packagesWant,

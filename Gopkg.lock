@@ -336,15 +336,15 @@
   revision = "f2aef88446f2a736fcb18db8ae57d708c52fdad0"
 
 [[projects]]
-  digest = "1:a92d7d9b56a765e6f4e1046c7641ce81fb8e2fd2d2ebc562635a773081f15fad"
+  digest = "1:e64a68d5ad08b6ee9e6e5531bb2a40d19d3019c87f2a7ed3035b4b81c0401c17"
   name = "github.com/operator-framework/operator-lifecycle-manager"
   packages = [
     "pkg/api/apis/operators",
     "pkg/api/apis/operators/v1alpha1",
   ]
   pruneopts = "NUT"
-  revision = "8799f39ef342dc1ff7430eba7a88c1c3c70cbdcc"
-  version = "0.7.1"
+  revision = "2abd0e2b4d93b4100220204d429d68a9990a160b"
+  version = "v3.11.0"
 
 [[projects]]
   digest = "1:ce6ed8da0816d327c1d586722a13c05a3fd26cf9b8649cdcda300c16f026feca"
@@ -842,6 +842,7 @@
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/require",
     "k8s.io/api/core/v1",
+    "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1",
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/apimachinery/pkg/runtime",

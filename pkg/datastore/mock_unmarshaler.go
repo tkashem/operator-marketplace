@@ -46,7 +46,7 @@ func (mr *MockManifestYAMLParserMockRecorder) Unmarshal(rawYAML interface{}) *go
 }
 
 // Marshal mocks base method
-func (m *MockManifestYAMLParser) Marshal(marshaled *StructuredOperatorManifestData) (*OperatorManifestData, error) {
+func (m *MockManifestYAMLParser) Marshal(marshaled *Manifest) (*OperatorManifestData, error) {
 	ret := m.ctrl.Call(m, "Marshal", marshaled)
 	ret0, _ := ret[0].(*OperatorManifestData)
 	ret1, _ := ret[1].(error)
