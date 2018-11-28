@@ -1,8 +1,12 @@
 package datastore
 
 import (
+	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/operator-framework/operator-marketplace/pkg/apis/marketplace/v1alpha1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 var (
@@ -10,13 +14,15 @@ var (
 )
 
 func init() {
-	Cache = newDataStore()
+	// Cache is the global instance of datastore used by
+	// the Marketplace operator.
+	Cache = New()
 }
 
-func newDataStore() *memoryDatastore {
+// New returns an instance of memoryDatastore.
+func New() *memoryDatastore {
 	return &memoryDatastore{
-		manifests: map[string]*operatorSourceRow{},
-		packages:  map[string]*SingleOperatorManifest{},
+		manifests: map[types.UID]*operatorSourceRow{},
 		parser:    &manifestYAMLParser{},
 		walker:    &walker{},
 		bundler:   &bundler{},
@@ -44,8 +50,13 @@ type Writer interface {
 	// operator from underlying datastore.
 	GetPackageIDs() string
 
-	// Write stores the list of operator manifest(s) into datastore.
-	Write(rawManifests []*OperatorMetadata) error
+	// Write saves the Spec associated with a given OperatorSource object and
+	// the downloaded manifest(s) into datastore.
+	//
+	// opsrc represents the given OperatorSource object.
+	// manifests is the list of manifest(s) associated with a given operator
+	// source.
+	Write(opsrc *v1alpha1.OperatorSource, rawManifests []*OperatorMetadata) error
 }
 
 // operatorSourceRow is what gets stored in datastore after an OperatorSource CR
@@ -55,19 +66,21 @@ type Writer interface {
 // in datastore. The Writer interface accepts a raw operator manifest and
 // marshals it into this type before writing it to the underlying storage.
 type operatorSourceRow struct {
-	// RegistryMetadata uniquely identifies a given operator manifest and
-	// points to its source in remote registry.
-	RegistryMetadata RegistryMetadata
+	// We store the Spec associated with a given OperatorSource object. This is
+	// so that we can determine whether Spec for an existing operator source
+	// has been updated.
+	//
+	// We compare the Spec of the received OperatorSource object to the one
+	// in datastore.
+	Spec *v1alpha1.OperatorSourceSpec
 
-	// Data is a structured representation of the given operator manifest.
-	Data StructuredOperatorManifestData
+	Operators map[string]*SingleOperatorManifest
 }
 
 // memoryDatastore is an in-memory implementation of operator manifest datastore.
 // TODO: In future, it will be replaced by an indexable persistent datastore.
 type memoryDatastore struct {
-	manifests map[string]*operatorSourceRow
-	packages  map[string]*SingleOperatorManifest
+	manifests map[types.UID]*operatorSourceRow
 	parser    ManifestYAMLParser
 	walker    ManifestWalker
 	bundler   Bundler
@@ -87,7 +100,12 @@ func (ds *memoryDatastore) Read(packageIDs []string) (*RawOperatorManifestData, 
 	return ds.parser.Marshal(manifest)
 }
 
-func (ds *memoryDatastore) Write(rawManifests []*OperatorMetadata) error {
+func (ds *memoryDatastore) Write(opsrc *v1alpha1.OperatorSource, rawManifests []*OperatorMetadata) error {
+	if opsrc == nil || rawManifests == nil {
+		return errors.New("invalid argument")
+	}
+
+	operators := map[string]*SingleOperatorManifest{}
 	for _, rawManifest := range rawManifests {
 		data, err := ds.parser.Unmarshal(rawManifest.RawYAML)
 		if err != nil {
@@ -101,27 +119,45 @@ func (ds *memoryDatastore) Write(rawManifests []*OperatorMetadata) error {
 
 		packages := decomposer.Packages()
 		for i, operatorPackage := range packages {
-			ds.packages[operatorPackage.GetPackageID()] = packages[i]
+			operators[operatorPackage.GetPackageID()] = packages[i]
 		}
-
-		manifest := &operatorSourceRow{
-			RegistryMetadata: rawManifest.RegistryMetadata,
-			Data:             *data,
-		}
-
-		ds.manifests[rawManifest.ID()] = manifest
 	}
+
+	manifest := &operatorSourceRow{
+		Spec:      &opsrc.Spec,
+		Operators: operators,
+	}
+
+	ds.manifests[opsrc.GetUID()] = manifest
 
 	return nil
 }
 
 func (ds *memoryDatastore) GetPackageIDs() string {
-	keys := make([]string, 0, len(ds.packages))
-	for key := range ds.packages {
-		keys = append(keys, key)
+	keys := ds.getAllPackages()
+	return strings.Join(keys, ",")
+}
+
+func (ds *memoryDatastore) getAllPackages() []string {
+	keys := make([]string, 0)
+	for _, row := range ds.manifests {
+		for packageID, _ := range row.Operators {
+			keys = append(keys, packageID)
+		}
 	}
 
-	return strings.Join(keys, ",")
+	return keys
+}
+
+func (ds *memoryDatastore) getAllPackagesToMap() map[string]*SingleOperatorManifest {
+	packages := map[string]*SingleOperatorManifest{}
+	for _, row := range ds.manifests {
+		for packageID, manifest := range row.Operators {
+			packages[packageID] = manifest
+		}
+	}
+
+	return packages
 }
 
 // validate ensures that no package is mentioned more than once in the list.
@@ -131,8 +167,10 @@ func (ds *memoryDatastore) validate(packageIDs []string) ([]*SingleOperatorManif
 	packages := make([]*SingleOperatorManifest, 0)
 	packageMap := map[string]*SingleOperatorManifest{}
 
+	existing := ds.getAllPackagesToMap()
+
 	for _, packageID := range packageIDs {
-		operatorPackage, exists := ds.packages[packageID]
+		operatorPackage, exists := existing[packageID]
 		if !exists {
 			return nil, fmt.Errorf("package [%s] not found", packageID)
 		}
