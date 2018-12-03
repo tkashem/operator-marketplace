@@ -34,6 +34,9 @@ const (
 	// In this phase, we connect to the specified registry, download available
 	// manifest(s) and save them to the underlying datastore.
 	OperatorSourceDownloading = "Downloading"
+
+	// In this phase,
+	OperatorSourcePurging = "Purging"
 )
 
 var (

@@ -25,8 +25,9 @@ func NewHandlerWithParams(client client.Client, scheme *runtime.Scheme, factory 
 
 func NewHandler(mgr manager.Manager) Handler {
 	return &operatorsourcehandler{
-		client: mgr.GetClient(),
-		scheme: mgr.GetScheme(),
+		client:    mgr.GetClient(),
+		scheme:    mgr.GetScheme(),
+		datastore: datastore.Cache,
 		factory: &phaseReconcilerFactory{
 			registryClientFactory: appregistry.NewClientFactory(),
 			datastore:             datastore.Cache,
@@ -52,6 +53,7 @@ type operatorsourcehandler struct {
 	// that reads objects from the cache and writes to the apiserver
 	client       client.Client
 	scheme       *runtime.Scheme
+	datastore    datastore.Writer
 	factory      PhaseReconcilerFactory
 	transitioner phase.Transitioner
 }

@@ -35,7 +35,7 @@ func TestReconcile_SpecHasChanged_ReconciliationTriggered(t *testing.T) {
 
 	datastore := mocks.NewDatastoreWriter(controller)
 	client := mocks.NewKubeClient(controller)
-	reconciler := operatorsource.NewUpdatedEventReconciler(helperGetContextLogger(), datastore, client)
+	reconciler := operatorsource.NewPurgingReconciler(helperGetContextLogger(), datastore, client)
 
 	// We expect the operator source to be removed from the datastore.
 	csc := helperNewCatalogSourceConfig(opsrcIn.Namespace, getExpectedCatalogSourceConfigName(opsrcIn.Name))
@@ -71,7 +71,7 @@ func TestReconcile_CatalogSourceConfigNotFound_ErrorExpected(t *testing.T) {
 
 	datastore := mocks.NewDatastoreWriter(controller)
 	client := mocks.NewKubeClient(controller)
-	reconciler := operatorsource.NewUpdatedEventReconciler(helperGetContextLogger(), datastore, client)
+	reconciler := operatorsource.NewPurgingReconciler(helperGetContextLogger(), datastore, client)
 
 	// We expect the operator source to be removed from the datastore.
 	csc := helperNewCatalogSourceConfig(opsrcIn.Namespace, getExpectedCatalogSourceConfigName(opsrcIn.Name))
