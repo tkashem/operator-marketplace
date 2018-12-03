@@ -59,26 +59,42 @@ func (h *operatorsourcehandler) Handle(ctx context.Context, in *v1alpha1.Operato
 		"name":      in.GetName(),
 	})
 
-	reconciler, err := h.factory.GetPhaseReconciler(logger, in)
+	prephaseReconciler, err := h.factory.GetPrePhaseReconciler(logger, in)
 	if err != nil {
 		return err
 	}
 
-	out, status, err := reconciler.Reconcile(ctx, in)
+	out, status, err := prephaseReconciler.Reconcile(ctx, in)
+	if err != nil {
+		return err
+	}
+	if status != nil {
+		return h.Transition(ctx, logger, out, status, err)
+	}
 
+	phasedReconciler, err := h.factory.GetPhaseReconciler(logger, in)
+	if err != nil {
+		return err
+	}
+
+	out, status, err = phasedReconciler.Reconcile(ctx, in)
+	return h.Transition(ctx, logger, out, status, err)
+}
+
+func (h *operatorsourcehandler) Transition(ctx context.Context, logger *log.Entry, opsrc *v1alpha1.OperatorSource, nextPhase *v1alpha1.Phase, reconciliationErr error) error {
 	// If reconciliation threw an error, we can't quit just yet. We need to
 	// figure out whether the OperatorSource object needs to be updated.
 
-	if !h.transitioner.TransitionInto(&out.Status.CurrentPhase, status) {
+	if !h.transitioner.TransitionInto(&opsrc.Status.CurrentPhase, nextPhase) {
 		// OperatorSource object has not changed, no need to update. We are done.
-		return err
+		return reconciliationErr
 	}
 
 	// OperatorSource object has been changed. At this point, reconciliation has
 	// either completed successfully or failed.
 	// In either case, we need to update the modified OperatorSource object.
-	if updateErr := h.client.Update(ctx, out); updateErr != nil {
-		if err == nil {
+	if updateErr := h.client.Update(ctx, opsrc); updateErr != nil {
+		if reconciliationErr == nil {
 			// No reconciliation err, but update of object has failed!
 			return updateErr
 		}
@@ -87,8 +103,8 @@ func (h *operatorsourcehandler) Handle(ctx context.Context, in *v1alpha1.Operato
 		logger.Errorf("Failed to update object - %v", updateErr)
 
 		// TODO: find a way to chain the update error?
-		return err
+		return reconciliationErr
 	}
 
-	return err
+	return reconciliationErr
 }

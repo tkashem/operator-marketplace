@@ -10,18 +10,18 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// NewUpdatedEventReconciler returns a Reconciler that reconciles
+// NewPrePhaseReconciler returns a Reconciler that reconciles
 // an OperatorSource object that has been updated.
-func NewUpdatedEventReconciler(logger *log.Entry, datastore datastore.Writer, client client.Client) Reconciler {
-	return &updatedEventReconciler{
+func NewPrePhaseReconciler(logger *log.Entry, datastore datastore.Writer, client client.Client) Reconciler {
+	return &prePhaseReconciler{
 		logger:    logger,
 		datastore: datastore,
 		client:    client,
 	}
 }
 
-// updatedEventReconciler implements Reconciler interface.
-type updatedEventReconciler struct {
+// prePhaseReconciler implements Reconciler interface.
+type prePhaseReconciler struct {
 	logger    *log.Entry
 	datastore datastore.Writer
 	client    client.Client
@@ -43,9 +43,30 @@ type updatedEventReconciler struct {
 // field and trigger reconciliation anew from "Validating" phase.
 //
 // If the purge fails the OperatorSource object is moved to "Failed" phase.
-func (r *updatedEventReconciler) Reconcile(ctx context.Context, in *v1alpha1.OperatorSource) (out *v1alpha1.OperatorSource, nextPhase *v1alpha1.Phase, err error) {
+func (r *prePhaseReconciler) Reconcile(ctx context.Context, in *v1alpha1.OperatorSource) (out *v1alpha1.OperatorSource, nextPhase *v1alpha1.Phase, err error) {
 	out = in.DeepCopy()
 
+	currentPhase := in.Status.CurrentPhase.Name
+
+	// If the object is in Initial state, this implies that
+	// It's a new OperatorSource CR or the user dropped the status field of an
+	// existing CR.
+	// In either case we want to kick of phased reconciliation.
+	if currentPhase == phase.Initial {
+		return
+	}
+
+	oldSpec, exists := r.datastore.GetOperatorSource(in.GetUID())
+	if exists && oldSpec.IsEqual(&in.Spec) {
+		return
+	}
+
+	// If the underlying datastore is not aware of this operator source
+	// and it has a valid state, then the cache is out of sync.
+	// It's time to rebuild the cache.
+
+	// If the Spec of the given OperatorSource object has changed from
+	// the one in datastore then we treat it as an update event.
 	r.datastore.RemoveOperatorSource(in.GetUID())
 
 	// Drop existing Status field so that reconciliation can start anew.
