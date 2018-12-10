@@ -82,6 +82,8 @@ type Writer interface {
 	// a Spec already exists. If no Spec is found then the function
 	// returns (nil, false).
 	GetOperatorSource(opsrcUID types.UID) (spec *v1alpha1.OperatorSourceSpec, ok bool)
+
+	HasUpdates(opsrcUID types.UID, metadata []*RegistryMetadata) bool
 }
 
 // operatorSourceRow is what gets stored in datastore after an OperatorSource CR
@@ -103,6 +105,10 @@ type operatorSourceRow struct {
 	// with the underlying operator source.
 	// The package name is used to uniquely identify the operator manifest(s).
 	Operators map[string]*SingleOperatorManifest
+
+	// Metadata is the metadata associated with each repository under the given
+	// namespace.
+	Metadata map[string]*RegistryMetadata
 }
 
 // GetPackages returns the list of available package(s) associated with an
@@ -175,6 +181,7 @@ func (ds *memoryDatastore) Write(opsrc *v1alpha1.OperatorSource, rawManifests []
 		return errors.New("invalid argument")
 	}
 
+	metadata := map[string]*RegistryMetadata{}
 	operators := map[string]*SingleOperatorManifest{}
 	for _, rawManifest := range rawManifests {
 		data, err := ds.parser.Unmarshal(rawManifest.RawYAML)
@@ -191,11 +198,14 @@ func (ds *memoryDatastore) Write(opsrc *v1alpha1.OperatorSource, rawManifests []
 		for i, operatorPackage := range packages {
 			operators[operatorPackage.GetPackageID()] = packages[i]
 		}
+
+		metadata[rawManifest.RegistryMetadata.Repository] = &rawManifest.RegistryMetadata
 	}
 
 	row := &operatorSourceRow{
 		Spec:      &opsrc.Spec,
 		Operators: operators,
+		Metadata:  metadata,
 	}
 
 	ds.rows[opsrc.GetUID()] = row
@@ -236,6 +246,32 @@ func (ds *memoryDatastore) GetOperatorSource(opsrcUID types.UID) (opsrc *v1alpha
 	}
 
 	return row.Spec, true
+}
+
+func (ds *memoryDatastore) HasUpdates(opsrcUID types.UID, metadata []*RegistryMetadata) (bool, error) {
+	// It's a simplistic implementation that treats the operator source coarsely.
+	// If any repository has a new release we treat it as if the entire
+	// namespace has changed.
+	// TODO: Return fine grained information that describes repository that
+	// was removed, or added or has a new release.
+	row, exists := ds.rows[opsrcUID]
+	if !exists {
+		return false, errors.New("")
+	}
+
+	changed := false
+	for _, m := range metadata {
+		if row.Metadata[m.Repository].Release != m.Release {
+			changed = true
+			break
+		}
+	}
+
+	if len(row.Metadata) == len(metadata) && !changed {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 // validate ensures that no package is mentioned more than once in the list.
