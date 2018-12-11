@@ -83,7 +83,7 @@ type Writer interface {
 	// returns (nil, false).
 	GetOperatorSource(opsrcUID types.UID) (spec *v1alpha1.OperatorSourceSpec, ok bool)
 
-	HasUpdates(opsrcUID types.UID, metadata []*RegistryMetadata) bool
+	HasUpdates(opsrcUID types.UID, metadata []*RegistryMetadata) (bool, error)
 }
 
 // operatorSourceRow is what gets stored in datastore after an OperatorSource CR
