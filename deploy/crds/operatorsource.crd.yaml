@@ -72,3 +72,17 @@ spec:
                 The namespace in app registry.
                 Only operator manifests under this namespace will be visible.
                 Please note that this is not a k8s namespace.
+            authorizationToken:
+              type: object
+              description: It refers to a Secret object that contains authorization token required to access private repositories in remote registry.
+              required:
+              - secretName
+              - secretNamespace
+              properties:
+                secretName:
+                  type: string
+                  description: It refers to the name of the Secret object.
+                secretNamespace:
+                  type: string
+                  description: It refers to the namespace where the Secret object is located.
+

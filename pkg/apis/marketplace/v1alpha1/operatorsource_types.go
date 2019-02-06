@@ -50,6 +50,10 @@ type OperatorSourceSpec struct {
 	// Please note that this is not a k8s namespace.
 	RegistryNamespace string `json:"registryNamespace,omitempty"`
 
+	// AuthorizationToken is the authorization token used to access private
+	// repositories in remote registry associated with the operator source.
+	AuthorizationToken OperatorSourceAuthorizationToken `json:"authorizationToken,omitempty"`
+
 	// DisplayName is passed along to the CatalogSourceConfig to be used
 	// by the resulting CatalogSource to be used as a pretty name.
 	DisplayName string `json:"displayName,omitempty"`
@@ -58,6 +62,16 @@ type OperatorSourceSpec struct {
 	// by the resulting CatalogSource that defines what entity published
 	// the artifacts from the OperatorSource.
 	Publisher string `json:"publisher,omitempty"`
+}
+
+// OperatorSourceAuthentication refers to a kubernetes Secret object that
+// contains authorization token required to access private repositories.
+type OperatorSourceAuthorizationToken struct {
+	// SecretName is the name of the kubernetes Secret object.
+	SecretName string `json:"secretName,omitempty"`
+
+	// SecretNamespace refers to the namespace the Secret object is located.
+	SecretNamespace string `json:"secretNamespace,omitempty"`
 }
 
 // OperatorSourceStatus defines the observed state of OperatorSource
