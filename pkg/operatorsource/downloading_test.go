@@ -39,7 +39,7 @@ func TestReconcile_ScheduledForDownload_Success(t *testing.T) {
 	opsrcWant.Status.Packages = "etcd,prometheus,amqp"
 
 	registryClient := mocks.NewAppRegistryClient(controller)
-	factory.EXPECT().New(opsrcIn.Spec.Type, opsrcIn.Spec.Endpoint).Return(registryClient, nil).Times(1)
+	factory.EXPECT().New(opsrcIn.Spec.Endpoint).Return(registryClient, nil).Times(1)
 
 	// We expect the remote registry to return a non-empty list of manifest(s).
 	manifestExpected := []*datastore.OperatorMetadata{
@@ -91,7 +91,7 @@ func TestReconcile_HaveFaultyPackages_Success(t *testing.T) {
 	opsrcWant.Status.Packages = "etcd,prometheus,amqp"
 
 	registryClient := mocks.NewAppRegistryClient(controller)
-	factory.EXPECT().New(opsrcIn.Spec.Type, opsrcIn.Spec.Endpoint).Return(registryClient, nil).Times(1)
+	factory.EXPECT().New(opsrcIn.Spec.Endpoint).Return(registryClient, nil).Times(1)
 
 	// We expect the remote registry to return a non-empty list of manifest(s).
 	manifestExpected := []*datastore.OperatorMetadata{
@@ -135,7 +135,7 @@ func TestReconcile_OperatorSourceReturnsEmptyManifestList_ErrorExpected(t *testi
 	opsrcIn := helperNewOperatorSourceWithPhase("marketplace", "foo", phase.OperatorSourceDownloading)
 
 	registryClient := mocks.NewAppRegistryClient(controller)
-	factory.EXPECT().New(opsrcIn.Spec.Type, opsrcIn.Spec.Endpoint).Return(registryClient, nil).Times(1)
+	factory.EXPECT().New(opsrcIn.Spec.Endpoint).Return(registryClient, nil).Times(1)
 
 	// We expect the registry to return an empty manifest list.
 	manifests := []*datastore.OperatorMetadata{}

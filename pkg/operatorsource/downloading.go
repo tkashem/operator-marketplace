@@ -57,7 +57,7 @@ func (r *downloadingReconciler) Reconcile(ctx context.Context, in *v1alpha1.Oper
 
 	r.logger.Infof("Downloading from [%s]", in.Spec.Endpoint)
 
-	registry, err := r.factory.New(in.Spec.Type, in.Spec.Endpoint)
+	registry, err := r.factory.New(in.Spec.Endpoint)
 	if err != nil {
 		nextPhase = phase.GetNextWithMessage(phase.OperatorSourceDownloading, err.Error())
 		return

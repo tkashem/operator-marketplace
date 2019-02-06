@@ -14,14 +14,16 @@ func NewClientFactory() ClientFactory {
 	return &factory{}
 }
 
+// ClientFactory is an interface that wraps the New method.
+//
+// New returns a new instance of appregistry Client from the specified source.
 type ClientFactory interface {
-	// New returns a new instance of appregistry Client from given source and type
-	New(sourceType, source string) (Client, error)
+	New(source string) (Client, error)
 }
 
 type factory struct{}
 
-func (f *factory) New(sourceType, source string) (Client, error) {
+func (f *factory) New(source string) (Client, error) {
 	u, err := url.Parse(source)
 	if err != nil {
 		return nil, err
